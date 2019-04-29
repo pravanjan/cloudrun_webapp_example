@@ -4,7 +4,7 @@ apply plugin: 'com.bmuschko.docker-remote-api'
 
 apply plugin: 'com.bmuschko.tomcat'
 
-def projectId = "anywherefeedbackml"
+def projectId = "your project Id "
 
 import com.bmuschko.gradle.docker.tasks.image.*
 
