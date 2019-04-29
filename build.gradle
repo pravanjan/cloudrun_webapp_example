@@ -1,0 +1,69 @@
+apply plugin: 'java'
+apply plugin: 'war' 
+apply plugin: 'com.bmuschko.docker-remote-api'
+
+apply plugin: 'com.bmuschko.tomcat'
+
+def projectId = "anywherefeedbackml"
+
+import com.bmuschko.gradle.docker.tasks.image.*
+
+repositories {
+    jcenter()
+}
+
+
+task createDockerfile(type:Dockerfile){
+    destFile = project.file('build/docker/Dockerfile')
+    from 'tomcat:9.0-alpine'
+    addFile war.archiveName, '/usr/local/tomcat/webapps/'
+    defaultCommand 'catalina.sh', 'run'
+    exposePort 8080
+   
+}
+
+task buildImage(type: DockerBuildImage) {
+    group = 'Docker'
+    dependsOn createDockerfile
+    inputDir = createDockerfile.destFile.parentFile
+    tag = "gcr.io/${projectId}/cloudrun"
+}
+
+ 
+ 
+dependencies {   
+    testCompile 'junit:junit:4.12' 
+    providedCompile "javax.servlet:javax.servlet-api:3.1.0"      
+     
+}
+
+task syncWebAppArchive(type: Sync) {
+    dependsOn assemble
+    from war.archivePath
+    into createDockerfile.destFile.parentFile
+}
+ 
+ createDockerfile.dependsOn syncWebAppArchive
+
+ 
+dependencies {
+    def tomcatVersion = '7.0.59'
+    
+    tomcat "org.apache.tomcat.embed:tomcat-embed-core:${tomcatVersion}",
+           "org.apache.tomcat.embed:tomcat-embed-logging-juli:${tomcatVersion}",
+           "org.apache.tomcat.embed:tomcat-embed-jasper:${tomcatVersion}"
+}
+ 
+ 
+buildscript {
+ 
+    repositories {
+        jcenter()
+    }
+ 
+    dependencies {
+        classpath 'com.bmuschko:gradle-tomcat-plugin:2.2.2'
+        classpath 'com.bmuschko:gradle-docker-plugin:3.2.3'
+
+    }
+}
